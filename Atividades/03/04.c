@@ -5,19 +5,19 @@
 
 int main(int argc, char **argv) {
     if(argc < 3) {
-        printf("Sintaxe incorreta. Sintaxe correta: %s <fonte> <destino>.", argv[0]);
+        printf("Sintaxe incorreta. Sintaxe correta: %s <fonte> <destino>.\n", argv[0]);
         return 1;
     }
 
     FILE *source = fopen(argv[1], "rb");
     if(source == NULL) {
-        printf("Erro ao abrir o arquivo de origem.");
+        puts("Erro ao abrir o arquivo de origem.");
         return 1;
     }
 
     FILE *destination = fopen(argv[2], "wb");
     if(destination == NULL) {
-        printf("Erro ao abrir o arquivo de desitno.");
+        puts("Erro ao abrir o arquivo de desitno.");
         fclose(source);
         return 1;
     }

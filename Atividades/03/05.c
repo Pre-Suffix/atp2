@@ -4,51 +4,78 @@
 #include <stdio.h>
 #include <string.h>
 
+typedef struct strbase {
+    char *str;
+    int len;
+} String;
+
+void addc(String *string, char c) {
+    string->len++;
+    string->str = realloc(string->str, sizeof(char) * (string->len + 1));
+    if(string->str == NULL) exit(1);
+
+    string->str[string->len - 1] = c;
+    string->str[string->len] = '\0';
+}
+
+void clear(String *string) {
+    if(string->str != NULL) free(string->str);
+
+    string->len = 0;
+    string->str = calloc(1, sizeof(char));
+    if(string->str == NULL) exit(1);
+}
+
 int main(int argc, char **argv) {
     if(argc < 3) {
-        printf("Sintaxe incorreta. Sintaxe correta: %s <arquivo> <palavra>.", argv[0]);
+        printf("Sintaxe incorreta. Sintaxe correta: %s <arquivo> <palavra>.\n", argv[0]);
         return 1;
     }
 
     FILE *arq = fopen(argv[1], "rb");
     if(arq == NULL) {
-        printf("Erro ao abrir o arquivo.");
+        puts("Erro ao abrir o arquivo.");
         return 1;
     }
 
-    int wordLen = strlen(argv[2]);
+    int wordlen = strlen(argv[2]);
 
-    int lineCount = 1;
-    int startP = 0;
+    String *line = malloc(sizeof(String));
+    if(line == NULL) exit(1);
+
+    clear(line);
+
     int c = 0;
-    for(int i = 0; c = fgetc(arq); i++) {
-        if(c != '\n' && c != EOF) continue;
+    int linesFound = 0;
 
-        fseek(arq, startP, SEEK_SET);
-        int lineLen = i - startP;
-        char *line = calloc(sizeof(char), lineLen + 2);
-        fgets(line, lineLen + 2, arq);
-
-        startP = i + 1;
-
-        for(int j = 0; j < (lineLen - wordLen); ++j) {
-            char *word = calloc(sizeof(char), wordLen + 2);
-            strncpy(word, &line[j], wordLen);
-
-            if(strcmp(word, argv[2]) == 0) {
-                printf("Linha %d: %s", lineCount, line);
-                free(word);
-                break;
-            }
-            
-            if(word != NULL) free(word);
+    for(int l = 0; 1;) {
+        c = fgetc(arq);
+        if(c != '\n' && c != EOF) {
+            addc(line, c);
+            continue;
         }
 
-        free(line);
-        lineCount++;
+        l++;
+        if(line->len < wordlen) {
+            clear(line);
 
+            if(c == EOF) break;
+            continue;
+        }
+
+        for(int i = 0; i <= (line->len - wordlen); i++) {
+            if(strncmp(&line->str[i], argv[2], wordlen) != 0) continue;
+
+            printf("%d - %s\n", l, line->str);
+            linesFound++;
+            break;
+        }
+
+        clear(line);
         if(c == EOF) break;
     }
+
+    if(linesFound == 0) puts("Nenhuma linha foi encontrada.");
 
     fclose(arq);
     return 0;

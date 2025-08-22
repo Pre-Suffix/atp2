@@ -4,106 +4,219 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <signal.h>
 
-typedef struct {
-    char nome[101];
+#define NAME_SIZE 100
+
+typedef struct aluno {
+    char nome[NAME_SIZE];
     int idade;
     float nota;
 } Aluno;
 
-int main(void) {
-    FILE *_alunos = fopen("alunos.data", "rb");
-    Aluno *alunos = calloc(1, sizeof(Aluno));
-    int cAlunos = 0;
+FILE *_alunos = NULL;
+char *filePath = "alunos.data";
 
-    if(_alunos != NULL) {
-        int filesize = 0;
-        while(fgetc(_alunos) != EOF) filesize++;
-        rewind(_alunos);
-        cAlunos = filesize / sizeof(Aluno);
+Aluno *alunos = NULL;
+int alunosSize = 0;
 
-        free(alunos);
-        alunos = calloc(cAlunos, sizeof(Aluno));
+void cadastrarAluno() {
+    // Se o vetor alunos estiver incorretamente configurado,
+    // encerrar o programa.
+    if(alunos == NULL) exit(1);
 
-        fread(alunos, sizeof(Aluno), cAlunos, _alunos);
-        fclose(_alunos);
+    // Aumente o vetor alunos para acomodar o novo aluno.
+    // Caso a alocação falhe, encerre o programa.
+    alunosSize++;
+    alunos = (Aluno *) realloc(alunos, alunosSize * sizeof(Aluno));
+    if(alunos == NULL) {
+        printf("Falha na alocação de memória.");
+        exit(1);
     }
 
-    while(1) {
+    int ai = alunosSize - 1; // índice do novo aluno
+
+    // Obtém o nome completo do aluno.
+    printf("\n(Aluno %d)\n Nome: ", alunosSize);
+    fflush(stdin);
+    fgets(alunos[ai].nome, NAME_SIZE, stdin);
+    alunos[ai].nome[strcspn(alunos[ai].nome, "\r\n")] = '\0'; // Remove o caractere '\n' do final do nome.
+
+    // Obtém a idade do aluno.
+    printf(" Idade: ");
+    fflush(stdin);
+    scanf("%d", &alunos[ai].idade);
+
+    // Obtém a nota do aluno.
+    printf(" Nota: ");
+    fflush(stdin);
+    scanf("%f", &alunos[ai].nota);
+
+    printf("Novo aluno adicionado ao registro.\n\n");
+    
+    return;
+}
+
+void listarAlunos() {
+    // Se o vetor alunos estiver incorretamente configurado,
+    // encerrar o programa.
+    if(alunos == NULL) exit(1);
+
+    // Se não tiver alunos no registro, retorne.
+    if(alunosSize == 0) {
+        printf("Não tem alunos no registro.\n\n");
+        return;
+    }
+
+    // Para cada aluno cadastrado, imprima seus dados.
+    putchar('\n');
+    for(int i = 0; i < alunosSize; i++)
+        printf("%d - %s (%da)\n Nota: %.2f\n\n", i + 1, alunos[i].nome, alunos[i].idade, alunos[i].nota);
+
+    // Esperar usuário para continuar execução.
+    printf("Aperte qualquer tecla para voltar ao menu.\n");
+    fflush(stdin);
+    getchar();
+
+    return;
+}
+
+void buscarAluno() {
+    // Se o vetor alunos estiver incorretamente configurado,
+    // encerrar o programa.
+    if(alunos == NULL) exit(1);
+
+    // Se não tiver alunos no registro, retorne.
+    if(alunosSize == 0) {
+        printf("Não tem alunos no registro.\n\n");
+        return;
+    }
+
+    char nome[NAME_SIZE] = {'\0'};
+
+    // Obtém do usuário o nome a ser procurado no registro.
+    printf("\nNome: ");
+    fflush(stdin);
+    fgets(nome, NAME_SIZE, stdin);
+    nome[strcspn(nome, "\r\n")] = '\0';
+
+    // Verifica para cada aluno no registro se bate com o nome buscado.
+    // Se bater, imprima o nome do aluno e retorne a função.
+    for(int i = 0; i < alunosSize; i++) {
+        if(strncmp(nome, alunos[i].nome, NAME_SIZE) != 0) continue;
+
+        printf("%d - %s (%da)\n Nota: %.2f\n\n", i + 1, alunos[i].nome, alunos[i].idade, alunos[i].nota);
+
+        // Esperar usuário para continuar execução.
+        printf("Aperte qualquer tecla para voltar ao menu.");
+        fflush(stdin);
+        getchar();
+
+        return;
+    }
+
+    printf("Aluno não encontrado no registro.\n\n");
+    return;
+}
+
+void salvarArquivo(int sig) {
+    // Se não tiver alunos no registro, encerre o programa.
+    if(alunosSize == 0) exit(0);
+
+    // Tenta abrir o arquivo para salvar,
+    // caso não consiga, encerre o programa.
+    if(_alunos != NULL) fclose(_alunos);
+
+    _alunos = fopen(filePath, "wb");
+    if(_alunos == NULL) exit(1);
+
+    // Salva os alunos no arquivo, e o fecha.
+    fwrite(alunos, sizeof(Aluno), alunosSize, _alunos);
+    fclose(_alunos);
+
+    // Encerra o programa.
+    puts("Arquivo salvo.");
+    exit(0);
+}
+
+void lerArquivo() {
+    // Tenta abrir o arquivo especificado para leitura,
+    // caso não consiga, inicialize o vetor alunos e retorne.
+    _alunos = fopen(filePath, "rb");
+    if(_alunos == NULL) {
+        alunos = calloc(1, sizeof(Aluno));
+        if(alunos == NULL) {
+            printf("Erro ao alocar memória.");
+            exit(1);
+        }
+
+        return;
+    }
+
+    // Verifique quantos alunos tem no registro.
+    for(; fgetc(_alunos) != EOF; alunosSize++);
+    alunosSize /= sizeof(Aluno);
+
+    // Aloque o vetor alunos para armazena-los na memória
+    alunos = calloc(alunosSize, sizeof(Aluno));
+    if(alunos == NULL) {
+        printf("Erro ao alocar memória.");
+        exit(1);
+    }
+
+    // Leia o registro de alunos e armazene na memória.
+    rewind(_alunos);
+    fread(alunos, sizeof(Aluno), alunosSize, _alunos);
+    fclose(_alunos);
+    _alunos = NULL;
+
+    return;
+}
+
+int main(int argc, char **argv) {
+    // Caso o usuário tente fechar o programa por CTRL+C,
+    // salve automáticamente os alunos registrados.
+    signal(SIGINT, salvarArquivo);
+
+    // Caso o usuário tenha especificado um arquivo,
+    // troque a variável global do nome.
+    if(argc > 1) filePath = argv[1];
+
+    lerArquivo();
+
+    int finalizarExecucao = 0;
+
+    do {
         int opcao = 0;
-        printf("\nTem %d aluno(s) no registro. O que pretende fazer?\n1 - Cadastrar novo aluno\n2 - Listar todos os alunos\n3 - Buscar pelo nome\n4 - Salvar e sair\n> ", cAlunos);
 
         fflush(stdin);
-        scanf("%d", &opcao);
+        printf("Existem %d aluno(s) no registro. O que deseja fazer?\n1- Cadastrar novo aluno\n2- Listar todos os alunos\n3- Buscar aluno pelo nome\n4- Salvar e sair.\n\n> ", alunosSize);
+        char bfr[100] = {'\0'};
+        fgets(bfr, 100, stdin);
+
+        opcao = atoi(bfr);
 
         if(opcao == 1) {
-            alunos = (Aluno *) _recalloc(alunos, cAlunos + 1, sizeof(Aluno));
-
-            fflush(stdin);
-            printf("(Aluno %d)\nNome: ", cAlunos + 1);
-            fgets(alunos[cAlunos].nome , 101, stdin);
-
-            fflush(stdin);
-            printf("Idade: ");
-            scanf("%d", &alunos[cAlunos].idade);
-
-            fflush(stdin);
-            printf("Nota: ");
-            scanf("%f", &alunos[cAlunos].nota);
-
-            printf("Aluno adicionado ao registro.\n");
-
-            cAlunos++;
-
+            cadastrarAluno();
             continue;
-        }
-        
-        if(opcao == 2) {
-            if(cAlunos == 0) {
-                printf("Nao tem alunos no registro.\n");
-                continue;
-            }
-
-            for(int i = 0; i < cAlunos; i++)
-                printf("(Aluno %d)\n - Nome: %s - Idade: %d\n - Nota: %0.2f\n\n", i + 1, alunos[i].nome, alunos[i].idade, alunos[i].nota);
-
+        } else if(opcao == 2) {
+            listarAlunos();
+            continue;
+        } else if(opcao == 3) {
+            buscarAluno();
+            continue;
+        } else if(opcao == 4) {
+            finalizarExecucao = 1;
             continue;
         }
 
-        if(opcao == 3) {
-            char nome[101] = {'\0'};
-            printf("Insira o nome completo: ");
+        if(strcmp("", bfr) == 0 && opcao == 0) break;
 
-            fflush(stdin);
-            fgets(nome, 101, stdin);
+        puts("Opção inválida.");
 
-            fflush(stdin);
-            int aluno = -1;
-            for(int i = 0; i < cAlunos; i++) {
-                if(strcmp(nome, alunos[i].nome) != 0) continue;
+    } while(finalizarExecucao == 0);
 
-                aluno = i;
-                break;
-            }
-
-            if(aluno == -1) {
-                printf("O aluno nao foi encontrado no registro.\n");
-                continue;
-            }
-
-            printf("Informacoes sobre %s - Idade: %d\n - Nota: %0.2f\n\n", alunos[aluno].nome, alunos[aluno].idade, alunos[aluno].nota);
-
-            continue;
-        }
-
-        if(opcao == 4) break;
-
-        printf("Opcao invalida.\n");
-    }
-    
-    _alunos = fopen("alunos.data", "wb");
-    fwrite(alunos, sizeof(Aluno), cAlunos, _alunos);
-    fclose(_alunos);
+    salvarArquivo(0);
 
     return 0;
 }

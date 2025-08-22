@@ -7,14 +7,14 @@ int main(void) {
     FILE *nomes = fopen("./nomes.txt", "r");
 
     if(nomes == NULL) {
-        printf("Erro ao abrir o arquivo.");
+        puts("Erro ao abrir o arquivo.");
         return 1;
     }
 
     for(int i = 0; (i < 5) && !feof(nomes); i++) {
         char nome[151] = {'\0'};
         fgets(nome, 150, nomes);
-        fputs(nome, stdout);
+        puts(nome);
     }
 
     fclose(nomes);

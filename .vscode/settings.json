@@ -4,6 +4,7 @@
         "02.C": "cpp",
         "stdlib.h": "c",
         "malloc.h": "c",
-        "print": "cpp"
+        "print": "cpp",
+        "vector": "cpp"
     }
 }

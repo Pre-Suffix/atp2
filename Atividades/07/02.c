@@ -10,6 +10,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#define BUF_SIZE 1024
+
 // Inverte os caracteres de uma dada string.
 //
 // Como funciona:
@@ -37,11 +39,11 @@ void inverter_string(char *string, int inicio, int fim) {
 }
 
 int main(void) {
-    char *string = (char *) calloc(100, sizeof(char));
+    char *string = (char *) calloc(BUF_SIZE, sizeof(char));
     printf("Insira uma string: ");
 
     fflush(stdin);
-    fgets(string, 100, stdin);
+    fgets(string, BUF_SIZE, stdin);
 
     size_t len = strlen(string);
     

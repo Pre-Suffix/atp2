@@ -4,7 +4,6 @@
 #include <random>
 #include <chrono>
 
-
 void quicksort(std::vector<unsigned int> &vec, size_t min, size_t max) {
     // Caso o subvetor analisado tenha tamanho 1 ou inválido, retorne.
     if(min >= max) return;

@@ -1,0 +1,31 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "intelliSenseMode": "windows-gcc-x64",
+            "compilerPath": "/usr/bin/g++",
+            "cStandard": "c23",
+            "cppStandard": "c++23",
+            "compilerArgs": [
+                "-std=c++23",
+                "-lstdc++exp",
+                "-Wall",
+                "-Werror",
+                "-Wextra",
+                "-Wpedantic",
+                "-Os",
+                "-s",
+                "-g3"
+            ]
+        }
+    ],
+    "version": 4
+}
